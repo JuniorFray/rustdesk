@@ -177,6 +177,7 @@ jobs:
       - name: Generate launcher icons
         run: |
           cd flutter
+          flutter pub get
           flutter pub run flutter_launcher_icons
 
       - name: Build Flutter APK
