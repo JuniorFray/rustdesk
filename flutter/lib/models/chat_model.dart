@@ -422,7 +422,7 @@ class ChatModel with ChangeNotifier {
           parent.target?.serverModel.jumpTo(id);
         }
       } else {
-        if (HomePage.homeKey.currentState?.isChatPageCurrentTab != true ||
+        if (false ||
             _currentKey != messagekey) {
           client.unreadChatMessageCount.value += 1;
           mobileUpdateUnreadSum();
