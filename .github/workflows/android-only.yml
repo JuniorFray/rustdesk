@@ -165,7 +165,13 @@ jobs:
               mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
             ;;
+       ;;
           esac
+
+      - name: Generate launcher icons
+        run: |
+          cd flutter
+          flutter pub run flutter_launcher_icons
 
       - name: Build Flutter APK
         shell: bash
