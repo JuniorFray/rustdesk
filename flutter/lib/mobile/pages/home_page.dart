@@ -76,7 +76,7 @@ class HomePageState extends State<HomePage> {
           // backgroundColor: MyTheme.grayBg,
           appBar: AppBar(
             centerTitle: true,
-            title: appTitle(),
+            title: Text('Conecta TV - Suporte'),
             actions: _pages.elementAt(_selectedIndex).appBarActions,
           ),
           bottomNavigationBar: BottomNavigationBar(
