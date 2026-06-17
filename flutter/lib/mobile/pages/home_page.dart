@@ -1,258 +1,255 @@
-// ARQUIVO MODIFICADO — AcessoRemoto (baseado no RustDesk 1.4.6)
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/mobile/pages/server_page.dart';
 import 'package:flutter_hbb/mobile/pages/settings_page.dart';
-import 'package:flutter_hbb/models/server_model.dart';
+import 'package:flutter_hbb/web/settings_page.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
+import '../../common.dart';
+import '../../common/widgets/chat_page.dart';
+import '../../models/platform_model.dart';
+import '../../models/state_model.dart';
+import 'connection_page.dart';
 
-const _kBlue    = Color(0xFF2980B9);
-const _kGreen   = Color(0xFF27AE60);
-const _kDark    = Color(0xFF2C3E50);
-const _kBgLight = Color(0xFFF0F4F8);
-
-class HomePage extends StatefulWidget {
-  static const String routeName = '/';
-  const HomePage({Key? key}) : super(key: key);
-
-  @override
-  State<HomePage> createState() => _HomePageState();
+abstract class PageShape extends Widget {
+  final String title = "";
+  final Widget icon = Icon(null);
+  final List<Widget> appBarActions = [];
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePage extends StatefulWidget {
+  static final homeKey = GlobalKey<HomePageState>();
+
+  HomePage() : super(key: homeKey);
+
+  @override
+  HomePageState createState() => HomePageState();
+}
+
+class HomePageState extends State<HomePage> {
+  var _selectedIndex = 0;
+  int get selectedIndex => _selectedIndex;
+  final List<PageShape> _pages = [];
+  int _chatPageTabIndex = -1;
+  bool get isChatPageCurrentTab => isAndroid
+      ? _selectedIndex == _chatPageTabIndex
+      : false; // change this when ios have chat page
+
+  void refreshPages() {
+    setState(() {
+      initPages();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      gFFI.serverModel.updatePasswordModel();
-    });
+    initPages();
+  }
+
+  void initPages() {
+    _pages.clear();
+    if (!bind.isIncomingOnly()) {
+      _pages.add(ConnectionPage(
+        appBarActions: [],
+      ));
+    }
+    if (isAndroid && !bind.isOutgoingOnly()) {
+      _chatPageTabIndex = _pages.length;
+      _pages.addAll([ChatPage(type: ChatPageType.mobileMain), ServerPage()]);
+    }
+    _pages.add(SettingsPage());
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: gFFI.serverModel,
-      child: Scaffold(
-        backgroundColor: _kBgLight,
-        appBar: AppBar(
-          backgroundColor: _kBlue,
-          elevation: 0,
-          title: const Text('Acesso Remoto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 28),
-              tooltip: 'Configurações',
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SettingsPage())),
-            ),
-          ],
-        ),
-        body: const _EasyHomeBody(),
-      ),
-    );
-  }
-}
-
-class _EasyHomeBody extends StatelessWidget {
-  const _EasyHomeBody({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final server = context.watch<ServerModel>();
-    final allPermsOk = server.mediaOk && server.inputOk;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _IdCard(server: server),
-          const SizedBox(height: 28),
-          _ShareButton(server: server, allPermsOk: allPermsOk),
-          const SizedBox(height: 20),
-          _ConnectionStatus(server: server),
-          const SizedBox(height: 28),
-          if (!allPermsOk) const _PermissionHint(),
-        ],
-      ),
-    );
-  }
-}
-
-class _IdCard extends StatelessWidget {
-  final ServerModel server;
-  const _IdCard({required this.server});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        children: [
-          const Text('Seu código de acesso', style: TextStyle(fontSize: 16, color: Colors.black54)),
-          const SizedBox(height: 10),
-          Obx(() {
-            final id = server.serverId.text;
-            return Text(
-              id.isEmpty ? '...' : id,
-              style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: _kBlue, letterSpacing: 5),
-            );
-          }),
-          const SizedBox(height: 6),
-          const Text('Informe este número para o técnico', style: TextStyle(fontSize: 14, color: Colors.black38)),
-          const SizedBox(height: 14),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.copy_rounded, size: 18),
-            label: const Text('Copiar código', style: TextStyle(fontSize: 15)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _kBlue,
-              side: const BorderSide(color: _kBlue),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            ),
-            onPressed: () {
-              final id = server.serverId.text;
-              if (id.isNotEmpty) {
-                Clipboard.setData(ClipboardData(text: id));
-                showToast('Código copiado!');
+    return WillPopScope(
+        onWillPop: () async {
+          if (_selectedIndex != 0) {
+            setState(() {
+              _selectedIndex = 0;
+            });
+          } else {
+            return true;
+          }
+          return false;
+        },
+        child: Scaffold(
+          // backgroundColor: MyTheme.grayBg,
+          appBar: AppBar(
+            centerTitle: true,
+            title: appTitle(),
+            actions: _pages.elementAt(_selectedIndex).appBarActions,
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            key: navigationBarKey,
+            items: _pages
+                .map((page) =>
+                    BottomNavigationBarItem(icon: page.icon, label: page.title))
+                .toList(),
+            currentIndex: _selectedIndex,
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: MyTheme.accent, //
+            unselectedItemColor: MyTheme.darkGray,
+            onTap: (index) => setState(() {
+              // close chat overlay when go chat page
+              if (_selectedIndex != index) {
+                _selectedIndex = index;
+                if (isChatPageCurrentTab) {
+                  gFFI.chatModel.hideChatIconOverlay();
+                  gFFI.chatModel.hideChatWindowOverlay();
+                  gFFI.chatModel.mobileClearClientUnread(
+                      gFFI.chatModel.currentKey.connId);
+                }
               }
-            },
+            }),
           ),
-        ],
-      ),
-    );
+          body: _pages.elementAt(_selectedIndex),
+        ));
   }
-}
 
-class _ShareButton extends StatelessWidget {
-  final ServerModel server;
-  final bool allPermsOk;
-  const _ShareButton({required this.server, required this.allPermsOk});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        icon: Icon(allPermsOk ? Icons.screen_share_rounded : Icons.lock_open_rounded, size: 30),
-        label: Text(
-          allPermsOk ? 'Compartilhamento Ativo' : 'Liberar Acesso Remoto',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: allPermsOk ? _kGreen : _kBlue,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 4,
-        ),
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ServerPage())),
-      ),
-    );
-  }
-}
-
-class _ConnectionStatus extends StatelessWidget {
-  final ServerModel server;
-  const _ConnectionStatus({required this.server});
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final conns = server.clients;
-      if (conns.isEmpty) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.black12)),
-          child: Row(
-            children: const [
-              Icon(Icons.signal_wifi_statusbar_null_outlined, color: Colors.black38, size: 24),
-              SizedBox(width: 12),
-              Expanded(child: Text('Aguardando conexão do técnico...', style: TextStyle(fontSize: 15, color: Colors.black45))),
-            ],
-          ),
-        );
-      }
-      return Column(children: conns.map((c) => _ClientTile(client: c)).toList());
-    });
-  }
-}
-
-class _ClientTile extends StatelessWidget {
-  final dynamic client;
-  const _ClientTile({required this.client});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EE),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _kGreen.withOpacity(0.4)),
-      ),
-      child: Row(
+  Widget appTitle() {
+    final currentUser = gFFI.chatModel.currentUser;
+    final currentKey = gFFI.chatModel.currentKey;
+    if (isChatPageCurrentTab &&
+        currentUser != null &&
+        currentKey.peerId.isNotEmpty) {
+      final connected =
+          gFFI.serverModel.clients.any((e) => e.id == currentKey.connId);
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.person_rounded, color: _kGreen, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Técnico conectado', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _kDark)),
-                Text(client?.name ?? '', style: const TextStyle(fontSize: 13, color: Colors.black45)),
-              ],
+          Tooltip(
+            message: currentKey.isOut
+                ? translate('Outgoing connection')
+                : translate('Incoming connection'),
+            child: Icon(
+              currentKey.isOut
+                  ? Icons.call_made_rounded
+                  : Icons.call_received_rounded,
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          Expanded(
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "${currentUser.firstName}   ${currentUser.id}",
+                  ),
+                  if (connected)
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color.fromARGB(255, 133, 246, 199)),
+                    ).marginSymmetric(horizontal: 2),
+                ],
+              ),
             ),
-            onPressed: () => gFFI.serverModel.sendLoginResponse(client, false),
-            child: const Text('Encerrar', style: TextStyle(fontSize: 14)),
           ),
         ],
-      ),
-    );
+      );
+    }
+    return Text(bind.mainGetAppNameSync());
   }
 }
 
-class _PermissionHint extends StatelessWidget {
-  const _PermissionHint();
+class WebHomePage extends StatelessWidget {
+  final connectionPage =
+      ConnectionPage(appBarActions: <Widget>[const WebSettingsPage()]);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFCC02)),
+    stateGlobal.isInMainPage = true;
+    handleUnilink(context);
+    return Scaffold(
+      // backgroundColor: MyTheme.grayBg,
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text("${bind.mainGetAppNameSync()} (Preview)"),
+        actions: connectionPage.appBarActions,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Icon(Icons.info_outline_rounded, color: Color(0xFFF39C12), size: 24),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Toque em "Liberar Acesso Remoto" e siga os 2 passos para que o técnico possa te ajudar.',
-              style: TextStyle(fontSize: 14, color: Color(0xFF7D6608), height: 1.5),
-            ),
-          ),
-        ],
-      ),
+      body: connectionPage,
     );
+  }
+
+  handleUnilink(BuildContext context) {
+    if (webInitialLink.isEmpty) {
+      return;
+    }
+    final link = webInitialLink;
+    webInitialLink = '';
+    final splitter = ["/#/", "/#", "#/", "#"];
+    var fakelink = '';
+    for (var s in splitter) {
+      if (link.contains(s)) {
+        var list = link.split(s);
+        if (list.length < 2 || list[1].isEmpty) {
+          return;
+        }
+        list.removeAt(0);
+        fakelink = "rustdesk://${list.join(s)}";
+        break;
+      }
+    }
+    if (fakelink.isEmpty) {
+      return;
+    }
+    final uri = Uri.tryParse(fakelink);
+    if (uri == null) {
+      return;
+    }
+    final args = urlLinkToCmdArgs(uri);
+    if (args == null || args.isEmpty) {
+      return;
+    }
+    bool isFileTransfer = false;
+    bool isViewCamera = false;
+    bool isTerminal = false;
+    String? id;
+    String? password;
+    for (int i = 0; i < args.length; i++) {
+      switch (args[i]) {
+        case '--connect':
+        case '--play':
+          id = args[i + 1];
+          i++;
+          break;
+        case '--file-transfer':
+          isFileTransfer = true;
+          id = args[i + 1];
+          i++;
+          break;
+        case '--view-camera':
+          isViewCamera = true;
+          id = args[i + 1];
+          i++;
+          break;
+        case '--terminal':
+          isTerminal = true;
+          id = args[i + 1];
+          i++;
+          break;
+        case '--terminal-admin':
+          setEnvTerminalAdmin();
+          isTerminal = true;
+          id = args[i + 1];
+          i++;
+          break;
+        case '--password':
+          password = args[i + 1];
+          i++;
+          break;
+        default:
+          break;
+      }
+    }
+    if (id != null) {
+      connect(context, id, 
+        isFileTransfer: isFileTransfer, 
+        isViewCamera: isViewCamera, 
+        isTerminal: isTerminal,
+        password: password);
+    }
   }
 }
