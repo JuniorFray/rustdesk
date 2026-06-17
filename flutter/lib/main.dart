@@ -509,7 +509,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           home: isDesktop
               ? const DesktopTabPage()
               : isWeb
-                  ? ? Container()
+                  ? Container()
                   : HomePage(),
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
