@@ -250,12 +250,20 @@ class ServiceNotRunningNotification extends StatelessWidget {
                     style:
                         const TextStyle(fontSize: 12, color: MyTheme.darkGray))
                 .marginOnly(bottom: 8),
-            ElevatedButton.icon(
-                icon: const Icon(Icons.play_arrow),
-                onPressed: () {
-  serverModel.toggleService();
-},
-                label: Text(translate("Start service")))
+            SizedBox(
+  width: double.infinity,
+  height: 60,
+  child: ElevatedButton.icon(
+    icon: const Icon(Icons.play_arrow, size: 30),
+    onPressed: () {
+      serverModel.toggleService();
+    },
+    label: Text(
+      translate("Start service"),
+      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    ),
+  ),
+)
           ],
         ));
   }
