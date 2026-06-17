@@ -74,6 +74,7 @@ jobs:
         job:
           - { arch: aarch64, target: aarch64-linux-android }
           - { arch: armv7, target: armv7-linux-androideabi }
+          - { arch: x86_64, target: x86_64-linux-android }
     steps:
       - name: Export GitHub Actions cache environment variables
         uses: actions/github-script@v6
