@@ -176,9 +176,10 @@ jobs:
 
       - name: Generate launcher icons
         run: |
-          cd flutter
+          pushd flutter
           flutter pub get
           flutter pub run flutter_launcher_icons
+          popd
 
       - name: Build Flutter APK
         shell: bash
