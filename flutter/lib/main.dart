@@ -181,7 +181,7 @@ void runMainApp(bool startService) async {
 void runMobileApp() async {
   await initEnv(kAppTypeMain);
   checkUpdate();
-  if (isAndroid) androidChannelInit();
+  // androidChannelInit removed
   if (isAndroid) platformFFI.syncAndroidServiceAppDirConfigPath();
   draggablePositions.load();
   await Future.wait([gFFI.abModel.loadCache(), gFFI.groupModel.loadCache()]);
@@ -509,7 +509,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           home: isDesktop
               ? const DesktopTabPage()
               : isWeb
-                  ? WebHomePage()
+                  ? ? Container()
                   : HomePage(),
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
