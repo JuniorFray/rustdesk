@@ -1035,7 +1035,7 @@ void showLanguageSettings(OverlayDialogManager dialogManager) async {
             lang = v;
           });
           await bind.mainSetLocalOption(key: kCommConfKeyLang, value: v);
-          HomePage.homeKey.currentState?.refreshPages();
+          // refreshPages removed
           Future.delayed(Duration(milliseconds: 200), close);
         }
       }
