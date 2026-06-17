@@ -1,30 +1,20 @@
 // ARQUIVO MODIFICADO — AcessoRemoto (baseado no RustDesk 1.4.6)
-// Tela de permissões reescrita como wizard simples passo a passo
-// Mantém toda a lógica original, apenas substitui a UI
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/common.dart';
-import 'package:flutter_hbb/mobile/pages/settings_page.dart';
 import 'package:flutter_hbb/models/platform_model.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-import '../../common/widgets/dialog.dart';
 import '../../models/server_model.dart';
 
-// ─── Cores do tema ────────────────────────────────────────────────────────────
-const _kGreen    = Color(0xFF2ECC71);
-const _kBlue     = Color(0xFF2980B9);
-const _kOrange   = Color(0xFFE67E22);
-const _kGray     = Color(0xFFBDC3C7);
-const _kDark     = Color(0xFF2C3E50);
-const _kBgLight  = Color(0xFFF0F4F8);
+const _kGreen   = Color(0xFF2ECC71);
+const _kBlue    = Color(0xFF2980B9);
+const _kOrange  = Color(0xFFE67E22);
+const _kGray    = Color(0xFFBDC3C7);
+const _kDark    = Color(0xFF2C3E50);
+const _kBgLight = Color(0xFFF0F4F8);
 
-// ═════════════════════════════════════════════════════════════════════════════
-// ServerPage — wrapper que mantém compatibilidade com o roteamento original
-// ═════════════════════════════════════════════════════════════════════════════
 class ServerPage extends StatefulWidget {
   const ServerPage({Key? key}) : super(key: key);
-
   @override
   State<ServerPage> createState() => _ServerPageState();
 }
@@ -39,21 +29,14 @@ class _ServerPageState extends State<ServerPage> {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// _EasySharePage — interface simplificada estilo wizard
-// ═════════════════════════════════════════════════════════════════════════════
 class _EasySharePage extends StatelessWidget {
   const _EasySharePage({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final server = context.watch<ServerModel>();
-
-    // Determina qual passo o usuário está
-    final bool hasMedia        = server.mediaOk;
-    final bool hasInput        = server.inputOk;
-    final bool hasFloating     = server.floatingWindowOk;
-    final bool allDone         = hasMedia && hasInput && hasFloating;
+    final bool hasMedia    = server.mediaOk;
+    final bool hasInput    = server.inputOk;
+    final bool allDone     = hasMedia && hasInput;
 
     return Scaffold(
       backgroundColor: _kBgLight,
@@ -64,12 +47,7 @@ class _EasySharePage extends StatelessWidget {
             Expanded(
               child: allDone
                   ? _AllDoneView(server: server)
-                  : _WizardView(
-                      server: server,
-                      hasMedia:    hasMedia,
-                      hasInput:    hasInput,
-                      hasFloating: hasFloating,
-                    ),
+                  : _WizardView(server: server, hasMedia: hasMedia, hasInput: hasInput),
             ),
           ],
         ),
@@ -78,11 +56,9 @@ class _EasySharePage extends StatelessWidget {
   }
 }
 
-// ─── Cabeçalho ───────────────────────────────────────────────────────────────
 class _Header extends StatelessWidget {
   final bool allDone;
   const _Header({required this.allDone});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -91,19 +67,11 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       child: Column(
         children: [
-          Icon(
-            allDone ? Icons.check_circle : Icons.share_rounded,
-            color: Colors.white,
-            size: 48,
-          ),
+          Icon(allDone ? Icons.check_circle : Icons.share_rounded, color: Colors.white, size: 48),
           const SizedBox(height: 8),
           Text(
             allDone ? 'Pronto para receber ajuda!' : 'Liberar Acesso Remoto',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ],
@@ -112,11 +80,9 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ─── Vista "tudo pronto" ──────────────────────────────────────────────────────
 class _AllDoneView extends StatelessWidget {
   final ServerModel server;
   const _AllDoneView({required this.server});
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -132,7 +98,6 @@ class _AllDoneView extends StatelessWidget {
             style: TextStyle(fontSize: 22, color: _kDark, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 30),
-          // ID do dispositivo em destaque
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -142,32 +107,21 @@ class _AllDoneView extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Text('Seu código de acesso',
-                    style: TextStyle(fontSize: 14, color: Colors.black54)),
+                const Text('Seu código de acesso', style: TextStyle(fontSize: 14, color: Colors.black54)),
                 const SizedBox(height: 8),
                 Obx(() => Text(
                   server.serverId.text,
-                  style: const TextStyle(
-                    fontSize: 38,
-                    fontWeight: FontWeight.bold,
-                    color: _kBlue,
-                    letterSpacing: 4,
-                  ),
+                  style: const TextStyle(fontSize: 38, fontWeight: FontWeight.bold, color: _kBlue, letterSpacing: 4),
                 )),
                 const SizedBox(height: 4),
-                const Text(
-                  'Informe este número para o técnico',
-                  style: TextStyle(fontSize: 13, color: Colors.black45),
-                ),
+                const Text('Informe este número para o técnico', style: TextStyle(fontSize: 13, color: Colors.black45)),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          // Botão para revogar acesso
           OutlinedButton.icon(
             icon: const Icon(Icons.stop_circle_outlined, color: Colors.red),
-            label: const Text('Encerrar acesso',
-                style: TextStyle(color: Colors.red, fontSize: 16)),
+            label: const Text('Encerrar acesso', style: TextStyle(color: Colors.red, fontSize: 16)),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Colors.red),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -181,55 +135,35 @@ class _AllDoneView extends StatelessWidget {
   }
 }
 
-// ─── Wizard passo a passo ─────────────────────────────────────────────────────
 class _WizardView extends StatelessWidget {
   final ServerModel server;
   final bool hasMedia;
   final bool hasInput;
-  final bool hasFloating;
-
-  const _WizardView({
-    required this.server,
-    required this.hasMedia,
-    required this.hasInput,
-    required this.hasFloating,
-  });
+  const _WizardView({required this.server, required this.hasMedia, required this.hasInput});
 
   @override
   Widget build(BuildContext context) {
-    // Define os 3 passos em ordem
     final steps = <_StepData>[
       _StepData(
-        index:       1,
-        icon:        Icons.screen_share_rounded,
-        color:       _kBlue,
-        title:       'Compartilhar a Tela',
+        index: 1,
+        icon: Icons.screen_share_rounded,
+        color: _kBlue,
+        title: 'Compartilhar a Tela',
         description: 'Permita que o técnico veja a sua tela.\nToque no botão abaixo e confirme.',
-        done:        hasMedia,
-        onTap:       () => server.requestMediaPermission(),
+        done: hasMedia,
+        onTap: () => server.toggleService(),
         buttonLabel: 'Liberar visualização da tela',
       ),
       _StepData(
-        index:       2,
-        icon:        Icons.touch_app_rounded,
-        color:       _kOrange,
-        title:       'Controle por Toque',
+        index: 2,
+        icon: Icons.touch_app_rounded,
+        color: _kOrange,
+        title: 'Controle por Toque',
         description: 'Permita que o técnico toque na tela por você.\nVocê sempre poderá parar quando quiser.',
-        done:        hasInput,
-        onTap:       () => server.requestInputPermission(context),
+        done: hasInput,
+        onTap: () => server.toggleInput(),
         buttonLabel: 'Liberar controle por toque',
-        locked:      !hasMedia, // só libera após passo 1
-      ),
-      _StepData(
-        index:       3,
-        icon:        Icons.picture_in_picture_alt_rounded,
-        color:       _kGreen,
-        title:       'Janela de Ajuda',
-        description: 'Exibe um botão pequeno na tela\npara encerrar o acesso facilmente.',
-        done:        hasFloating,
-        onTap:       () => server.requestFloatingWindowPermission(),
-        buttonLabel: 'Ativar janela de ajuda',
-        locked:      !hasInput, // só libera após passo 2
+        locked: !hasMedia,
       ),
     ];
 
@@ -241,7 +175,6 @@ class _WizardView extends StatelessWidget {
   }
 }
 
-// ─── Card de passo individual ─────────────────────────────────────────────────
 class _StepCard extends StatelessWidget {
   final _StepData data;
   const _StepCard({required this.data});
@@ -259,65 +192,39 @@ class _StepCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: done ? _kGreen : (locked ? _kGray : data.color),
-            width: 2,
-          ),
-          boxShadow: [
-            if (!locked)
-              BoxShadow(color: data.color.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
+          border: Border.all(color: done ? _kGreen : (locked ? _kGray : data.color), width: 2),
+          boxShadow: [if (!locked) BoxShadow(color: data.color.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Linha de cabeçalho do passo
               Row(
                 children: [
-                  // Número do passo ou check
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: done ? _kGreen : (locked ? _kGray : data.color),
                     child: done
                         ? const Icon(Icons.check, color: Colors.white, size: 22)
-                        : Text('${data.index}',
-                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        : Text('${data.index}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(width: 14),
-                  // Título
                   Expanded(
-                    child: Text(
-                      data.title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: done ? _kGreen : _kDark,
-                      ),
-                    ),
+                    child: Text(data.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: done ? _kGreen : _kDark)),
                   ),
-                  // Ícone principal
                   Icon(data.icon, color: done ? _kGreen : (locked ? _kGray : data.color), size: 32),
                 ],
               ),
               const SizedBox(height: 12),
-              // Descrição
-              Text(
-                data.description,
-                style: TextStyle(fontSize: 15, color: locked ? Colors.black38 : Colors.black54, height: 1.5),
-              ),
+              Text(data.description, style: TextStyle(fontSize: 15, color: locked ? Colors.black38 : Colors.black54, height: 1.5)),
               const SizedBox(height: 16),
-              // Botão de ação
               if (!done)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     icon: Icon(locked ? Icons.lock_outline : data.icon, size: 20),
-                    label: Text(
-                      locked ? 'Complete o passo anterior primeiro' : data.buttonLabel,
-                      style: const TextStyle(fontSize: 15),
-                    ),
+                    label: Text(locked ? 'Complete o passo anterior primeiro' : data.buttonLabel, style: const TextStyle(fontSize: 15)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: locked ? _kGray : data.color,
                       foregroundColor: Colors.white,
@@ -329,14 +236,11 @@ class _StepCard extends StatelessWidget {
                   ),
                 )
               else
-                Row(
-                  children: const [
-                    Icon(Icons.check_circle, color: _kGreen, size: 20),
-                    SizedBox(width: 6),
-                    Text('Liberado com sucesso!',
-                        style: TextStyle(color: _kGreen, fontWeight: FontWeight.w600, fontSize: 15)),
-                  ],
-                ),
+                Row(children: const [
+                  Icon(Icons.check_circle, color: _kGreen, size: 20),
+                  SizedBox(width: 6),
+                  Text('Liberado com sucesso!', style: TextStyle(color: _kGreen, fontWeight: FontWeight.w600, fontSize: 15)),
+                ]),
             ],
           ),
         ),
@@ -345,27 +249,19 @@ class _StepCard extends StatelessWidget {
   }
 }
 
-// ─── Dados de cada passo ──────────────────────────────────────────────────────
 class _StepData {
-  final int        index;
-  final IconData   icon;
-  final Color      color;
-  final String     title;
-  final String     description;
-  final bool       done;
+  final int index;
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String description;
+  final bool done;
   final VoidCallback onTap;
-  final String     buttonLabel;
-  final bool       locked;
-
+  final String buttonLabel;
+  final bool locked;
   const _StepData({
-    required this.index,
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.description,
-    required this.done,
-    required this.onTap,
-    required this.buttonLabel,
-    this.locked = false,
+    required this.index, required this.icon, required this.color,
+    required this.title, required this.description, required this.done,
+    required this.onTap, required this.buttonLabel, this.locked = false,
   });
 }
