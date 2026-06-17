@@ -22,7 +22,7 @@ import '../widgets/dialog.dart';
 import 'home_page.dart';
 import 'scan_page.dart';
 
-class SettingsPage extends StatefulWidget implements PageShape {
+class SettingsPage extends StatefulWidget {
   @override
   final title = translate("Settings");
 
