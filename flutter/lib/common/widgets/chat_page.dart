@@ -12,7 +12,7 @@ enum ChatPageType {
   desktopCM,
 }
 
-class ChatPage extends StatelessWidget {
+class ChatPage extends StatelessWidget implements PageShape {
   late final ChatModel chatModel;
   final ChatPageType? type;
 
