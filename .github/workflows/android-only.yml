@@ -181,7 +181,7 @@ jobs:
           flutter pub run flutter_launcher_icons
           popd
 
-      - name: Build Flutter APK
+      - name: Build Flutter AAB
         shell: bash
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -193,28 +193,28 @@ jobs:
             aarch64-linux-android)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
               pushd flutter
-              flutter build apk --release --target-platform android-arm64 --split-per-abi
-              mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ../rustdesk-${{ env.VERSION }}-aarch64.apk
+              flutter build appbundle --release --target-platform android-arm64
+              mv build/app/outputs/bundle/release/app-release.aab ../conectatv-${{ env.VERSION }}-aarch64.aab
             ;;
             armv7-linux-androideabi)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
               pushd flutter
-              flutter build apk --release --target-platform android-arm --split-per-abi
-              mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ../rustdesk-${{ env.VERSION }}-armv7.apk
+              flutter build appbundle --release --target-platform android-arm
+              mv build/app/outputs/bundle/release/app-release.aab ../conectatv-${{ env.VERSION }}-armv7.aab
             ;;
             x86_64-linux-android)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/x86_64/
               pushd flutter
-              flutter build apk --release --target-platform android-x64 --split-per-abi
-              mv build/app/outputs/flutter-apk/app-x86_64-release.apk ../rustdesk-${{ env.VERSION }}-x86_64.apk
+              flutter build appbundle --release --target-platform android-x64
+              mv build/app/outputs/bundle/release/app-release.aab ../conectatv-${{ env.VERSION }}-x86_64.aab
             ;;
           esac
           popd
-          mkdir -p signed-apk
-          mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk signed-apk/ 2>/dev/null || mv rustdesk-${{ env.VERSION }}-*.apk signed-apk/
+          mkdir -p signed-aab
+          mv ../conectatv-${{ env.VERSION }}-${{ matrix.job.arch }}.aab signed-aab/
 
-      - name: Upload APK
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-          path: signed-apk/
+          name: conectatv-${{ env.VERSION }}-${{ matrix.job.arch }}.aab
+          path: signed-aab/
