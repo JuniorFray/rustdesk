@@ -217,8 +217,25 @@ jobs:
               mv ./flutter/build/app/outputs/bundle/release/app-release.aab ./conectatv-${{ env.VERSION }}-x86_64.aab
             ;;
           esac
+
+      - name: Sign AAB
+        run: |
+          echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
+          case ${{ matrix.job.target }} in
+            aarch64-linux-android) AAB_FILE=./conectatv-${{ env.VERSION }}-aarch64.aab ;;
+            armv7-linux-androideabi) AAB_FILE=./conectatv-${{ env.VERSION }}-armv7.aab ;;
+            x86_64-linux-android) AAB_FILE=./conectatv-${{ env.VERSION }}-x86_64.aab ;;
+          esac
+          jarsigner -verbose \
+            -sigalg SHA256withRSA \
+            -digestalg SHA-256 \
+            -keystore keystore.jks \
+            -storepass "${{ secrets.ANDROID_KEY_STORE_PASSWORD }}" \
+            -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            "$AAB_FILE" \
+            "${{ secrets.ANDROID_ALIAS }}"
           mkdir -p signed-aab
-          mv ./conectatv-${{ env.VERSION }}-${{ matrix.job.arch }}.aab signed-aab/
+          mv "$AAB_FILE" signed-aab/
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
