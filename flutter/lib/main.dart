@@ -179,6 +179,13 @@ void runMainApp(bool startService) async {
 
 void runMobileApp() async {
   await initEnv(kAppTypeMain);
+  // Servidor próprio - Conecta TV
+  final currentServer = bind.mainGetOptionSync(key: 'custom-rendezvous-server');
+  if (currentServer.isEmpty) {
+    await bind.mainSetOption(key: 'custom-rendezvous-server', value: '137.131.205.157');
+    await bind.mainSetOption(key: 'relay-server', value: '137.131.205.157');
+    await bind.mainSetOption(key: 'key', value: 'NSV+9cXKs8NM3Bw4Qh7Y1Abonzmp0gpxDfnW7N7svnU=');
+  }
   checkUpdate();
   if (isAndroid) androidChannelInit();
   if (isAndroid) platformFFI.syncAndroidServiceAppDirConfigPath();
