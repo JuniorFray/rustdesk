@@ -186,7 +186,7 @@ jobs:
           flutter pub run flutter_launcher_icons
           popd
 
-      - name: Build Flutter AAB
+      - name: Build Flutter AAB and APK
         shell: bash
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -194,54 +194,70 @@ jobs:
           export PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
           sed -i "s/org.gradle.jvmargs=-Xmx1024M/org.gradle.jvmargs=-Xmx2g/g" ./flutter/android/gradle.properties
           sed -i "s/signingConfig signingConfigs.release/\/\/ signingConfig removed/g" ./flutter/android/app/build.gradle
+          BASE_VER=$(grep 'version:' flutter/pubspec.yaml | sed 's/.*+//')
           case ${{ matrix.job.target }} in
             aarch64-linux-android)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
-              BASE_VER=$(grep 'version:' flutter/pubspec.yaml | sed 's/.*+//')
               pushd flutter
               flutter build appbundle --release --target-platform android-arm64 --build-number $((BASE_VER * 10 + 2))
+              flutter build apk --release --target-platform android-arm64 --split-per-abi --build-number $((BASE_VER * 10 + 2))
               popd
               mv ./flutter/build/app/outputs/bundle/release/app-release.aab ./conectatv-${{ env.VERSION }}-aarch64.aab
+              mv ./flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ./conectatv-${{ env.VERSION }}-aarch64.apk
             ;;
             armv7-linux-androideabi)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
-              BASE_VER=$(grep 'version:' flutter/pubspec.yaml | sed 's/.*+//')
               pushd flutter
               flutter build appbundle --release --target-platform android-arm --build-number $((BASE_VER * 10 + 1))
+              flutter build apk --release --target-platform android-arm --split-per-abi --build-number $((BASE_VER * 10 + 1))
               popd
               mv ./flutter/build/app/outputs/bundle/release/app-release.aab ./conectatv-${{ env.VERSION }}-armv7.aab
+              mv ./flutter/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ./conectatv-${{ env.VERSION }}-armv7.apk
             ;;
             x86_64-linux-android)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/x86_64/
-              BASE_VER=$(grep 'version:' flutter/pubspec.yaml | sed 's/.*+//')
               pushd flutter
               flutter build appbundle --release --target-platform android-x64 --build-number $((BASE_VER * 10 + 3))
+              flutter build apk --release --target-platform android-x64 --split-per-abi --build-number $((BASE_VER * 10 + 3))
               popd
               mv ./flutter/build/app/outputs/bundle/release/app-release.aab ./conectatv-${{ env.VERSION }}-x86_64.aab
+              mv ./flutter/build/app/outputs/flutter-apk/app-x86_64-release.apk ./conectatv-${{ env.VERSION }}-x86_64.apk
             ;;
           esac
 
-      - name: Sign AAB
+      - name: Sign AAB and APK
         run: |
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
           case ${{ matrix.job.target }} in
-            aarch64-linux-android) AAB_FILE=./conectatv-${{ env.VERSION }}-aarch64.aab ;;
-            armv7-linux-androideabi) AAB_FILE=./conectatv-${{ env.VERSION }}-armv7.aab ;;
-            x86_64-linux-android) AAB_FILE=./conectatv-${{ env.VERSION }}-x86_64.aab ;;
+            aarch64-linux-android)
+              AAB_FILE=./conectatv-${{ env.VERSION }}-aarch64.aab
+              APK_FILE=./conectatv-${{ env.VERSION }}-aarch64.apk
+            ;;
+            armv7-linux-androideabi)
+              AAB_FILE=./conectatv-${{ env.VERSION }}-armv7.aab
+              APK_FILE=./conectatv-${{ env.VERSION }}-armv7.apk
+            ;;
+            x86_64-linux-android)
+              AAB_FILE=./conectatv-${{ env.VERSION }}-x86_64.aab
+              APK_FILE=./conectatv-${{ env.VERSION }}-x86_64.apk
+            ;;
           esac
-          jarsigner -verbose \
-            -sigalg SHA256withRSA \
-            -digestalg SHA-256 \
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
             -keystore keystore.jks \
             -storepass "${{ secrets.ANDROID_KEY_STORE_PASSWORD }}" \
             -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
-            "$AAB_FILE" \
-            "${{ secrets.ANDROID_ALIAS }}"
+            "$AAB_FILE" "${{ secrets.ANDROID_ALIAS }}"
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore keystore.jks \
+            -storepass "${{ secrets.ANDROID_KEY_STORE_PASSWORD }}" \
+            -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            "$APK_FILE" "${{ secrets.ANDROID_ALIAS }}"
           mkdir -p signed-aab
           mv "$AAB_FILE" signed-aab/
+          mv "$APK_FILE" signed-aab/
 
-      - name: Upload AAB
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: conectatv-${{ env.VERSION }}-${{ matrix.job.arch }}.aab
+          name: conectatv-${{ env.VERSION }}-${{ matrix.job.arch }}
           path: signed-aab/
