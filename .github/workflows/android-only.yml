@@ -193,7 +193,7 @@ jobs:
         run: |
           export PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
           sed -i "s/org.gradle.jvmargs=-Xmx1024M/org.gradle.jvmargs=-Xmx2g/g" ./flutter/android/gradle.properties
-          sed -i "s/signingConfig signingConfigs.release/\/\/ signingConfig removed/g" ./flutter/android/app/build.gradle
+          sed -i "s/signingConfigs.release/signingConfigs.debug/g" ./flutter/android/app/build.gradle
           BASE_VER=$(( ${{ github.run_number }} + 100 ))
           case ${{ matrix.job.target }} in
             aarch64-linux-android)
