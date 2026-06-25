@@ -197,22 +197,25 @@ jobs:
           case ${{ matrix.job.target }} in
             aarch64-linux-android)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
+              BASE_VER=$(grep 'version:' flutter/pubspec.yaml | sed 's/.*+//')
               pushd flutter
-              flutter build appbundle --release --target-platform android-arm64
+              flutter build appbundle --release --target-platform android-arm64 --build-number $((BASE_VER * 10 + 2))
               popd
               mv ./flutter/build/app/outputs/bundle/release/app-release.aab ./conectatv-${{ env.VERSION }}-aarch64.aab
             ;;
             armv7-linux-androideabi)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
+              BASE_VER=$(grep 'version:' flutter/pubspec.yaml | sed 's/.*+//')
               pushd flutter
-              flutter build appbundle --release --target-platform android-arm
+              flutter build appbundle --release --target-platform android-arm --build-number $((BASE_VER * 10 + 1))
               popd
               mv ./flutter/build/app/outputs/bundle/release/app-release.aab ./conectatv-${{ env.VERSION }}-armv7.aab
             ;;
             x86_64-linux-android)
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/x86_64/
+              BASE_VER=$(grep 'version:' flutter/pubspec.yaml | sed 's/.*+//')
               pushd flutter
-              flutter build appbundle --release --target-platform android-x64
+              flutter build appbundle --release --target-platform android-x64 --build-number $((BASE_VER * 10 + 3))
               popd
               mv ./flutter/build/app/outputs/bundle/release/app-release.aab ./conectatv-${{ env.VERSION }}-x86_64.aab
             ;;
