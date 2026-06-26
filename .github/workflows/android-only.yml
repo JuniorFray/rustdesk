@@ -247,11 +247,6 @@ jobs:
             -storepass "${{ secrets.ANDROID_KEY_STORE_PASSWORD }}" \
             -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
             "$AAB_FILE" "${{ secrets.ANDROID_ALIAS }}"
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore keystore.jks \
-            -storepass "${{ secrets.ANDROID_KEY_STORE_PASSWORD }}" \
-            -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
-            "$APK_FILE" "${{ secrets.ANDROID_ALIAS }}"
           mkdir -p signed-aab
           mv "$AAB_FILE" signed-aab/
           mv "$APK_FILE" signed-aab/
